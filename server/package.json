@@ -8,6 +8,7 @@
     "dev": "bun run --hot src/index.ts"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.49.7",
     "hono": "^4.7.7",
     "shared": "workspace:*"
   },
