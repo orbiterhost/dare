@@ -3,7 +3,20 @@ import mascot from "./assets/mascot.png";
 import { Button } from "./components/ui/button";
 import { resourceContent } from "./lib/resourceContent";
 import { supabase } from "./lib/auth";
-import { Session } from "@supabase/supabase-js";
+import type { Session } from "@supabase/supabase-js";
+
+// Define the Pledge type
+type Pledge = {
+  id: string;
+  email: string;
+  user_metadata: {
+    avatar_url: string;
+    name: string;
+    preferred_username: string;
+  };
+};
+
+type ResourceTypes = keyof typeof resourceContent;
 
 function App() {
   const [showModal, setShowModal] = useState(false);
@@ -15,25 +28,27 @@ function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(false);
   const [pledgeCount, setPledgeCount] = useState(0);
+  const [pledges, setPledges] = useState<Pledge[]>([]);
 
   useEffect(() => {
-    getPledgeCount();
+    getPledgeData();
   }, []);
 
   useEffect(() => {
     getUserSession();
   }, [session]);
 
-  const getPledgeCount = async () => {
-    const res = await fetch(`${import.meta.env.VITE_BASE_URL}/pledges`);
+  const getPledgeData = async () => {
+    const res = await fetch(`${import.meta.env.VITE_SERVER_URL}/pledges`);
 
     if (!res.ok) {
       console.log("error");
       console.log(res.status);
     } else {
       const data = await res.json();
-      const pledges = data?.data;
-      setPledgeCount(pledges);
+      const pledgeData = data?.data || [];
+      setPledges(pledgeData);
+      setPledgeCount(pledgeData.length);
     }
   };
 
@@ -55,6 +70,7 @@ function App() {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "github",
     });
+    console.log(data);
     if (error) {
       console.log(error);
       alert(error.message);
@@ -64,7 +80,7 @@ function App() {
     getUserSession();
   };
 
-  const openModal = (resourceType) => {
+  const openModal = (resourceType: ResourceTypes) => {
     setModalContent(resourceContent[resourceType]);
     setShowModal(true);
   };
@@ -81,44 +97,34 @@ function App() {
     setShowShareModal(false);
   };
 
-  const sharePledge = (platform) => {
+  const sharePledge = (platform: any) => {
     const shareText =
       "I've just signed the pledge to Stop SSR! Join the movement for faster, client-rendered websites at stopssr.com #StopSSR";
     let shareUrl = "";
 
     switch (platform) {
       case "twitter":
-        shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-          shareText
-        )}`;
+        shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
         break;
       case "reddit":
         shareUrl = `https://www.reddit.com/submit?url=https://stopssr.com&title=${encodeURIComponent(
-          shareText
+          shareText,
         )}`;
         break;
       case "bluesky":
         // Bluesky doesn't have a standard sharing URL yet, but we can simulate it
-        shareUrl = `https://bsky.app/intent/compose?text=${encodeURIComponent(
-          shareText
-        )}`;
+        shareUrl = `https://bsky.app/intent/compose?text=${encodeURIComponent(shareText)}`;
         break;
       case "threads":
         // Threads doesn't have a standard web sharing mechanism yet, simulating
-        shareUrl = `https://www.threads.net/intent/post?text=${encodeURIComponent(
-          shareText
-        )}`;
+        shareUrl = `https://www.threads.net/intent/post?text=${encodeURIComponent(shareText)}`;
         break;
       case "farcaster":
         // Farcaster doesn't have a standard web sharing mechanism yet, simulating
-        shareUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(
-          shareText
-        )}`;
+        shareUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(shareText)}`;
         break;
       default:
-        shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-          shareText
-        )}`;
+        shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
     }
 
     if (shareUrl) {
@@ -147,6 +153,43 @@ function App() {
     );
   };
 
+  // New component to show pledgers
+  const PledgeSigners = () => {
+    return (
+      <div className="mt-6">
+        <h3 className="text-lg font-bold text-center text-yellow-400 mb-3">
+          PLEDGE SIGNERS WALL OF FAME
+        </h3>
+        <div className="bg-black border-2 border-yellow-500 p-4 rounded">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {pledges.map((pledge) => (
+              <div key={pledge.id} className="flex items-center space-x-2 bg-zinc-900 p-2 rounded">
+                <img
+                  src={pledge.user_metadata.avatar_url}
+                  alt={pledge.user_metadata.name}
+                  className="w-10 h-10 rounded-full"
+                  style={{
+                    border: "2px solid #666",
+                  }}
+                />
+                <a
+                  href={`https://github.com/${pledge.user_metadata.preferred_username}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <div className="text-white font-bold">{pledge.user_metadata.name}</div>
+                  <div className="text-blue-500 text-xs">
+                    @{pledge.user_metadata.preferred_username}
+                  </div>
+                </a>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-black text-white p-4">
       {/* Main container */}
@@ -166,8 +209,7 @@ function App() {
             <div
               className="p-3 rounded-md"
               style={{
-                background:
-                  "linear-gradient(to bottom, #f0a848 0%, #d87d29 100%)",
+                background: "linear-gradient(to bottom, #f0a848 0%, #d87d29 100%)",
                 boxShadow:
                   "inset 2px 2px 5px rgba(255, 255, 255, 0.5), inset -2px -2px 5px rgba(0, 0, 0, 0.5)",
                 border: "1px solid #955214",
@@ -182,8 +224,7 @@ function App() {
                     href="/#take-the-pledge"
                     className="relative text-white font-bold text-lg px-8 py-1 uppercase"
                     style={{
-                      background:
-                        "linear-gradient(to bottom, #4aff4a 0%, #00a000 100%)",
+                      background: "linear-gradient(to bottom, #4aff4a 0%, #00a000 100%)",
                       border: "1px solid #006000",
                       borderRadius: "50px",
                       boxShadow:
@@ -290,27 +331,17 @@ function App() {
           </div>
 
           <div className="mt-6 text-center">
-            <p className="text-lg font-bold">
-              There's a lot to do and learn here
-            </p>
+            <p className="text-lg font-bold">There's a lot to do and learn here</p>
             <p>and many chances for everyone to participate.</p>
-            <p>
-              Let us know what you think of the site, and if you have any
-              suggestions or ideas.
-            </p>
+            <p>Let us know what you think of the site, and if you have any suggestions or ideas.</p>
             <p>See you inside!</p>
           </div>
         </div>
 
         {/* StopSSR Pledge */}
-        <div
-          id="take-the-pledge"
-          className="bg-red-600 text-white p-6 rounded-lg w-full mb-8"
-        >
+        <div id="take-the-pledge" className="bg-red-600 text-white p-6 rounded-lg w-full mb-8">
           <h2 className="text-2xl font-bold mb-4 text-center">
-            {session && session.user
-              ? "THANK YOU FOR YOUR PLEDGE"
-              : "TAKE THE PLEDGE"}
+            {session && session.user ? "THANK YOU FOR YOUR PLEDGE" : "TAKE THE PLEDGE"}
           </h2>
           <p className="mb-4 text-center">
             {session && session.user
@@ -333,13 +364,14 @@ function App() {
                 onClick={connectGithub}
                 className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-bold text-xs md:text-lg"
               >
-                {loading
-                  ? "Signing the pledge..."
-                  : "CONNECT YOUR GITHUB & SIGN THE PLEDGE"}
+                {loading ? "Signing the pledge..." : "CONNECT YOUR GITHUB & SIGN THE PLEDGE"}
               </Button>
             </div>
           )}
         </div>
+
+        {/* Add Pledge Signers Wall of Fame */}
+        {pledges.length > 0 && <PledgeSigners />}
 
         {/* Footer area */}
         <div className="border-t-2 border-gray-700 pt-4 mb-4">
@@ -349,19 +381,13 @@ function App() {
         <div className="text-center mb-8"></div>
 
         <div className="flex justify-center space-x-6">
-          <a
-            href="#"
-            className="border-2 border-gray-700 p-2 bg-gray-800 hover:bg-gray-700"
-          >
+          <a href="#" className="border-2 border-gray-700 p-2 bg-gray-800 hover:bg-gray-700">
             <div className="text-white text-sm">Return to</div>
             <div className="text-red-500 font-bold">
               <a href="/#take-the-pledge">Sign the pledge</a>
             </div>
           </a>
-          <a
-            href="#"
-            className="border-2 border-gray-700 p-2 bg-gray-800 hover:bg-gray-700"
-          >
+          <a href="#" className="border-2 border-gray-700 p-2 bg-gray-800 hover:bg-gray-700">
             <div className="text-red-500 font-bold">StopSSR</div>
             <div className="text-white">
               <a href="/#links">LINKS</a>
@@ -373,10 +399,7 @@ function App() {
       {/* 2000s-style Modal for Resources */}
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div
-            className="fixed inset-0 bg-black opacity-70"
-            onClick={closeModal}
-          ></div>
+          <div className="fixed inset-0 bg-black opacity-70" onClick={closeModal}></div>
           <div
             className="z-10 w-11/12 max-w-md mx-auto bg-white text-black rounded relative"
             style={{
@@ -392,9 +415,7 @@ function App() {
                 borderBottom: "2px solid #003399",
               }}
             >
-              <div className="text-white font-bold tracking-wide">
-                {modalContent.title}
-              </div>
+              <div className="text-white font-bold tracking-wide">{modalContent.title}</div>
               <button
                 onClick={closeModal}
                 className="w-5 h-5 flex items-center justify-center"
@@ -409,10 +430,7 @@ function App() {
             </div>
 
             {/* Modal Content - using typical 2000s web styling */}
-            <div
-              className="p-4"
-              style={{ fontFamily: "Arial, sans-serif", lineHeight: "1.5" }}
-            >
+            <div className="p-4" style={{ fontFamily: "Arial, sans-serif", lineHeight: "1.5" }}>
               <div
                 className="mb-4 p-3"
                 style={{
@@ -429,8 +447,7 @@ function App() {
                   onClick={closeModal}
                   className="px-4 py-1 text-sm font-bold uppercase"
                   style={{
-                    background:
-                      "linear-gradient(to bottom, #ff6666 0%, #cc0000 100%)",
+                    background: "linear-gradient(to bottom, #ff6666 0%, #cc0000 100%)",
                     color: "white",
                     border: "2px outset #ff9999",
                     textShadow: "1px 1px 1px #660000",
@@ -465,10 +482,7 @@ function App() {
       {/* 2000s-style Share Modal */}
       {showShareModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div
-            className="fixed inset-0 bg-black opacity-70"
-            onClick={closeShareModal}
-          ></div>
+          <div className="fixed inset-0 bg-black opacity-70" onClick={closeShareModal}></div>
           <div
             className="z-10 w-11/12 max-w-md mx-auto bg-white text-black rounded relative"
             style={{
@@ -484,9 +498,7 @@ function App() {
                 borderBottom: "2px solid #003300",
               }}
             >
-              <div className="text-white font-bold tracking-wide">
-                Share Your Anti-SSR Pledge!
-              </div>
+              <div className="text-white font-bold tracking-wide">Share Your Anti-SSR Pledge!</div>
               <button
                 onClick={closeShareModal}
                 className="w-5 h-5 flex items-center justify-center"
@@ -501,10 +513,7 @@ function App() {
             </div>
 
             {/* Modal Content - with "Under Construction" GIF-style header */}
-            <div
-              className="p-4"
-              style={{ fontFamily: "Arial, sans-serif", lineHeight: "1.5" }}
-            >
+            <div className="p-4" style={{ fontFamily: "Arial, sans-serif", lineHeight: "1.5" }}>
               <div className="text-center mb-4">
                 <div
                   className="mx-auto p-2 font-bold text-sm"
@@ -531,8 +540,7 @@ function App() {
                   Spread the word! Tell your friends to join the movement!
                 </p>
                 <p className="text-center text-sm">
-                  Share your pledge on these platforms and help free the web
-                  from SSR!
+                  Share your pledge on these platforms and help free the web from SSR!
                 </p>
               </div>
 
@@ -543,8 +551,7 @@ function App() {
                   onClick={() => sharePledge("twitter")}
                   className="w-full text-white font-bold py-1 px-2 flex items-center justify-center"
                   style={{
-                    background:
-                      "linear-gradient(to bottom, #333333 0%, #000000 100%)",
+                    background: "linear-gradient(to bottom, #333333 0%, #000000 100%)",
                     border: "2px outset #666666",
                     boxShadow: "2px 2px 4px rgba(0, 0, 0, 0.3)",
                   }}
@@ -557,9 +564,7 @@ function App() {
                       "linear-gradient(to bottom, #333333 0%, #000000 100%)";
                   }}
                 >
-                  <span style={{ fontFamily: "Arial, sans-serif" }}>
-                    Share on X/Twitter
-                  </span>
+                  <span style={{ fontFamily: "Arial, sans-serif" }}>Share on X/Twitter</span>
                 </button>
 
                 {/* Reddit */}
@@ -567,8 +572,7 @@ function App() {
                   onClick={() => sharePledge("reddit")}
                   className="w-full text-white font-bold py-1 px-2 flex items-center justify-center"
                   style={{
-                    background:
-                      "linear-gradient(to bottom, #ff4500 0%, #cc3700 100%)",
+                    background: "linear-gradient(to bottom, #ff4500 0%, #cc3700 100%)",
                     border: "2px outset #ff6622",
                     boxShadow: "2px 2px 4px rgba(0, 0, 0, 0.3)",
                   }}
@@ -581,9 +585,7 @@ function App() {
                       "linear-gradient(to bottom, #ff4500 0%, #cc3700 100%)";
                   }}
                 >
-                  <span style={{ fontFamily: "Arial, sans-serif" }}>
-                    Share on Reddit
-                  </span>
+                  <span style={{ fontFamily: "Arial, sans-serif" }}>Share on Reddit</span>
                 </button>
 
                 {/* Bluesky */}
@@ -591,8 +593,7 @@ function App() {
                   onClick={() => sharePledge("bluesky")}
                   className="w-full text-white font-bold py-1 px-2 flex items-center justify-center"
                   style={{
-                    background:
-                      "linear-gradient(to bottom, #0066ff 0%, #0044cc 100%)",
+                    background: "linear-gradient(to bottom, #0066ff 0%, #0044cc 100%)",
                     border: "2px outset #0088ff",
                     boxShadow: "2px 2px 4px rgba(0, 0, 0, 0.3)",
                   }}
@@ -605,9 +606,7 @@ function App() {
                       "linear-gradient(to bottom, #0066ff 0%, #0044cc 100%)";
                   }}
                 >
-                  <span style={{ fontFamily: "Arial, sans-serif" }}>
-                    Share on Bluesky
-                  </span>
+                  <span style={{ fontFamily: "Arial, sans-serif" }}>Share on Bluesky</span>
                 </button>
 
                 {/* Threads */}
@@ -615,8 +614,7 @@ function App() {
                   onClick={() => sharePledge("threads")}
                   className="w-full text-white font-bold py-1 px-2 flex items-center justify-center"
                   style={{
-                    background:
-                      "linear-gradient(to bottom, #000000 0%, #333333 100%)",
+                    background: "linear-gradient(to bottom, #000000 0%, #333333 100%)",
                     border: "2px outset #444444",
                     boxShadow: "2px 2px 4px rgba(0, 0, 0, 0.3)",
                   }}
@@ -629,9 +627,7 @@ function App() {
                       "linear-gradient(to bottom, #000000 0%, #333333 100%)";
                   }}
                 >
-                  <span style={{ fontFamily: "Arial, sans-serif" }}>
-                    Share on Threads
-                  </span>
+                  <span style={{ fontFamily: "Arial, sans-serif" }}>Share on Threads</span>
                 </button>
 
                 {/* Farcaster */}
@@ -639,8 +635,7 @@ function App() {
                   onClick={() => sharePledge("farcaster")}
                   className="w-full text-white font-bold py-1 px-2 flex items-center justify-center"
                   style={{
-                    background:
-                      "linear-gradient(to bottom, #8844ff 0%, #6622cc 100%)",
+                    background: "linear-gradient(to bottom, #8844ff 0%, #6622cc 100%)",
                     border: "2px outset #aa66ff",
                     boxShadow: "2px 2px 4px rgba(0, 0, 0, 0.3)",
                   }}
@@ -653,9 +648,7 @@ function App() {
                       "linear-gradient(to bottom, #8844ff 0%, #6622cc 100%)";
                   }}
                 >
-                  <span style={{ fontFamily: "Arial, sans-serif" }}>
-                    Share on Farcaster
-                  </span>
+                  <span style={{ fontFamily: "Arial, sans-serif" }}>Share on Farcaster</span>
                 </button>
               </div>
 
@@ -665,8 +658,7 @@ function App() {
                   onClick={closeShareModal}
                   className="px-4 py-1 text-sm font-bold uppercase"
                   style={{
-                    background:
-                      "linear-gradient(to bottom, #00cc00 0%, #006600 100%)",
+                    background: "linear-gradient(to bottom, #00cc00 0%, #006600 100%)",
                     color: "white",
                     border: "2px outset #00ee00",
                     textShadow: "1px 1px 1px #003300",
