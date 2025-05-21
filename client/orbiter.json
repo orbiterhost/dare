@@ -1,0 +1,6 @@
+{
+  "siteId": "4e9e4392-22cf-4924-8dde-89c5539a89d1",
+  "domain": "stopssr",
+  "buildCommand": "bun run build",
+  "buildDir": "dist"
+}
