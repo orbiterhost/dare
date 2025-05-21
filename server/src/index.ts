@@ -12,7 +12,24 @@ app.get('/', (c) => {
   return c.text('Hello Hono!')
 })
 
-app.post('/pledge', async (c) => {
+app.get("/pledges", async (c) => {
+
+  const supabase = createClient(
+    c.env.SUPABASE_URL,
+    c.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+
+  const { data, error } = await supabase.from("pledges").select("*")
+
+  if (error) {
+    console.log(error)
+    return c.json({ error: "Problem fetching pledges" }, { status: 500 })
+  }
+
+  return c.json(data as Pledge[])
+})
+
+app.post('/pledges', async (c) => {
 
   const token = c.req.header("X-Orbiter-Token");
 
