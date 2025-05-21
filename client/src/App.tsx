@@ -1,16 +1,11 @@
 import { useEffect, useState } from "react";
 import mascot from "./assets/mascot.png";
-import { ApiResponse } from "shared";
 import { Button } from "./components/ui/button";
 import { resourceContent } from "./lib/resourceContent";
 import { supabase } from "./lib/auth";
 import { Session } from "@supabase/supabase-js";
 
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:3000";
-
 function App() {
-  const [data, setData] = useState<ApiResponse | undefined>();
-  const [email, setEmail] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [modalContent, setModalContent] = useState({
@@ -147,23 +142,6 @@ function App() {
           >
             {pledgeCount}
           </span>
-        </div>
-        <div className="mt-1">
-          <span style={{ color: "#ff0000" }}>★</span>
-          <span>This site is 100% SSR FREE!</span>
-          <span style={{ color: "#ff0000" }}>★</span>
-        </div>
-        <div className="mt-1">
-          <img
-            src="https://www.example.com/best-viewed-ie.gif"
-            alt="Best viewed in Internet Explorer 6.0"
-            className="inline-block"
-            style={{
-              border: "none",
-              height: "20px",
-              // This is a placeholder - the actual image won't be visible
-            }}
-          />
         </div>
       </div>
     );
@@ -330,13 +308,14 @@ function App() {
           className="bg-red-600 text-white p-6 rounded-lg w-full mb-8"
         >
           <h2 className="text-2xl font-bold mb-4 text-center">
-            {session && session.user ?  "THANK YOU FOR YOUR PLEDGE" : "TAKE THE PLEDGE"}
+            {session && session.user
+              ? "THANK YOU FOR YOUR PLEDGE"
+              : "TAKE THE PLEDGE"}
           </h2>
           <p className="mb-4 text-center">
-            {
-              session && session.user ? 
-              "I pledge to stay CSR-only and resist the pressures of Server-Side Rendering." : "Your pledge tells the world that you will stick to CSR technology and resist the pressures of Server-Side Rendering."
-            }            
+            {session && session.user
+              ? "I pledge to stay CSR-only and resist the pressures of Server-Side Rendering."
+              : "Your pledge tells the world that you will stick to CSR technology and resist the pressures of Server-Side Rendering."}
           </p>
           {session && session.user.email ? (
             <div className="space-y-4">
@@ -706,6 +685,12 @@ function App() {
                 </button>
               </div>
               <PledgeCounter />
+              <div className="mt-1">
+                <span style={{ color: "#ff0000" }}>★</span>
+                <span>This site is 100% SSR FREE!</span>
+                <span style={{ color: "#ff0000" }}>★</span>
+              </div>
+              <div className="mt-1"></div>
             </div>
           </div>
         </div>
