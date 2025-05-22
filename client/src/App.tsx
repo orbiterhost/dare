@@ -192,6 +192,51 @@ function App() {
 
   return (
     <div className="min-h-screen bg-black text-white p-4">
+      {/* Classic "Under Construction" style banner */}
+      <div className="w-full mb-4">
+        <div
+          className="mx-auto text-center py-3 px-4"
+          style={{
+            background: "repeating-linear-gradient(-45deg, #ffff00 0px, #ffff00 10px, #ff0000 10px, #ff0000 20px)",
+            border: "3px solid #000000",
+            boxShadow: "inset 0 0 10px rgba(0,0,0,0.5), 0 0 10px rgba(255,255,0,0.5)",
+            animation: "flash 1.5s infinite alternate",
+          }}
+        >
+          <div
+            className="text-black font-bold text-lg"
+            style={{
+              fontFamily: "Arial Black, Arial, sans-serif",
+              textShadow: "2px 2px 4px rgba(255,255,255,0.8)",
+              letterSpacing: "2px",
+            }}
+          >
+            🚧 CLIENT-SIDE POWERED BY{" "}
+            <a
+              href="https://orbiter.host"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:no-underline"
+              style={{
+                color: "#000000",
+                textDecoration: "underline",
+                fontWeight: "bold",
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.color = "#ffffff";
+                e.currentTarget.style.textShadow = "2px 2px 4px rgba(0,0,0,0.8)";
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.color = "#000000";
+                e.currentTarget.style.textShadow = "2px 2px 4px rgba(255,255,255,0.8)";
+              }}
+            >
+              ORBITER
+            </a>{" "}
+            🚧
+          </div>
+        </div>
+      </div>
       {/* Main container */}
       <div className="max-w-3xl mx-auto border-2 border-gray-700 p-4">
         {/* Header */}
@@ -328,6 +373,11 @@ function App() {
               <li>Many developers try SSR due to peer pressure</li>
               <li>SSR is a gateway to more complex architectures</li>
             </ul>
+          </div>
+
+          <div className="text-center my-4">
+            <h3 className="uppercase text-xl font-bold">Read the manifesto</h3>
+            <a className="underline mt-2" href="https://orbiter.host/blog/the-static-website-manifesto">The Static Website Manifesto</a>
           </div>
 
           <div className="mt-6 text-center">
