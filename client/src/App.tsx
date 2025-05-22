@@ -99,7 +99,7 @@ function App() {
 
   const sharePledge = (platform: any) => {
     const shareText =
-      "I've just signed the pledge to Stop SSR! Join the movement for faster, client-rendered websites at stopssr.com #StopSSR";
+      "I've just signed the pledge to Stop SSR! Join the movement for faster, client-rendered websites at https://www.stopssr.com #StopSSR";
     let shareUrl = "";
 
     switch (platform) {
